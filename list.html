@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}All Work Orders{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Work Orders</h1>
+    <p class="text-gray-500">Filter and search jobs</p>
+  </div>
+  {% if session.role == 'admin' %}
+  <a href="{{ url_for('create_workorder') }}" class="bg-callison-700 hover:bg-callison-800 text-white px-4 py-2 rounded-lg font-medium text-sm">
+    + New Work Order
+  </a>
+  {% endif %}
+</div>
+
+<!-- Filters -->
+<form method="GET" class="bg-white rounded-xl border p-4 mb-6 flex flex-wrap gap-3 items-end">
+  <div>
+    <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+    <select name="status" class="px-3 py-2 border rounded-lg text-sm">
+      <option value="">All</option>
+      {% for s in ['New', 'Assigned', 'En Route', 'On Site', 'Completed', 'Invoiced', 'Cancelled'] %}
+      <option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-500 mb-1">Priority</label>
+    <select name="priority" class="px-3 py-2 border rounded-lg text-sm">
+      <option value="">All</option>
+      {% for p in ['Emergency', 'High', 'Normal', 'Low'] %}
+      <option value="{{ p }}" {% if filters.priority == p %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% if session.role == 'admin' and techs %}
+  <div>
+    <label class="block text-xs font-medium text-gray-500 mb-1">Technician</label>
+    <select name="tech" class="px-3 py-2 border rounded-lg text-sm">
+      <option value="">All</option>
+      {% for t in techs %}
+      <option value="{{ t.id }}" {% if filters.tech == t.id|string %}selected{% endif %}>{{ t.full_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <div class="flex-1 min-w-[180px]">
+    <label class="block text-xs font-medium text-gray-500 mb-1">Search</label>
+    <input type="text" name="q" value="{{ filters.q }}" placeholder="WO #, name, address..."
+           class="w-full px-3 py-2 border rounded-lg text-sm">
+  </div>
+  <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm">Filter</button>
+  <a href="{{ url_for('list_workorders') }}" class="text-sm text-gray-500 px-2 py-2">Clear</a>
+</form>
+
+<!-- Results -->
+<div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-left text-gray-500">
+        <tr>
+          <th class="px-4 py-3 font-medium">WO #</th>
+          <th class="px-4 py-3 font-medium">Customer / Address</th>
+          <th class="px-4 py-3 font-medium">Type</th>
+          <th class="px-4 py-3 font-medium">Priority</th>
+          <th class="px-4 py-3 font-medium">Status</th>
+          <th class="px-4 py-3 font-medium">Tech</th>
+          <th class="px-4 py-3 font-medium">Scheduled</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {% for wo in work_orders %}
+        <tr class="hover:bg-gray-50 cursor-pointer" onclick="location.href='{{ url_for('view_workorder', wo_id=wo.id) }}'">
+          <td class="px-4 py-3 font-medium text-callison-700">{{ wo.wo_number }}</td>
+          <td class="px-4 py-3">
+            <div class="font-medium">{{ wo.customer_name }}</div>
+            <div class="text-xs text-gray-500">{{ wo.service_address }}, {{ wo.city }}</div>
+          </td>
+          <td class="px-4 py-3">{{ wo.job_type }}</td>
+          <td class="px-4 py-3">
+            <span class="inline-block px-2 py-0.5 rounded text-xs priority-{{ wo.priority }}">{{ wo.priority }}</span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="inline-block px-2 py-0.5 rounded text-xs status-{{ wo.status }}">{{ wo.status }}</span>
+          </td>
+          <td class="px-4 py-3">{{ wo.tech_name or '—' }}</td>
+          <td class="px-4 py-3 text-gray-500">{{ wo.scheduled_date or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="px-4 py-10 text-center text-gray-400">No matching work orders.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
